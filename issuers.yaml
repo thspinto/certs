@@ -1,4 +1,4 @@
-vault: "Private"
+vault: "lab"
 base_url: "https://raw.githubusercontent.com/thspinto/certs/refs/heads/main/issuers"
 
 issuers:
