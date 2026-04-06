@@ -82,7 +82,7 @@ func runGenerate(args []string) error {
 	}
 
 	for _, iss := range issuers {
-		if err := generateForIssuer(cfg.Vault, iss); err != nil {
+		if err := generateForIssuer(cfg.Vault, cfg.BaseURL, iss); err != nil {
 			return fmt.Errorf("issuer %s: %w", iss.Name, err)
 		}
 	}
@@ -105,14 +105,14 @@ func runRotate(args []string) error {
 		if !JWKSExists(jwksPath) {
 			return fmt.Errorf("issuer %s: no existing JWKS found at %s (use 'generate' first)", iss.Name, jwksPath)
 		}
-		if err := generateForIssuer(cfg.Vault, iss); err != nil {
+		if err := generateForIssuer(cfg.Vault, cfg.BaseURL, iss); err != nil {
 			return fmt.Errorf("issuer %s: %w", iss.Name, err)
 		}
 	}
 	return nil
 }
 
-func generateForIssuer(globalVault string, iss Issuer) error {
+func generateForIssuer(globalVault, baseURL string, iss Issuer) error {
 	vault := iss.EffectiveVault(globalVault)
 
 	raw, jwkKey, err := GenerateKeyPair()
@@ -143,6 +143,9 @@ func generateForIssuer(globalVault string, iss Issuer) error {
 	}
 	if err := SaveJWKS(jwksPath, set); err != nil {
 		return err
+	}
+	if err := SaveOpenIDConfiguration(".", iss.Name, baseURL); err != nil {
+		return fmt.Errorf("writing openid-configuration: %w", err)
 	}
 
 	fmt.Printf("%s: generated key %s\n", iss.Name, kid)

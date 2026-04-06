@@ -64,3 +64,36 @@ func JWKSExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
 }
+
+func OpenIDConfigPath(baseDir, issuerName string) string {
+	return filepath.Join(baseDir, "issuers", issuerName, ".well-known", "openid-configuration")
+}
+
+type OpenIDConfiguration struct {
+	Issuer                           string   `json:"issuer"`
+	JWKSURI                          string   `json:"jwks_uri"`
+	ResponseTypesSupported           []string `json:"response_types_supported"`
+	SubjectTypesSupported            []string `json:"subject_types_supported"`
+	IDTokenSigningAlgValuesSupported []string `json:"id_token_signing_alg_values_supported"`
+}
+
+func SaveOpenIDConfiguration(baseDir, issuerName, baseURL string) error {
+	issuerURL := baseURL + "/" + issuerName
+	cfg := OpenIDConfiguration{
+		Issuer:                           issuerURL,
+		JWKSURI:                          issuerURL + "/.well-known/jwks.json",
+		ResponseTypesSupported:           []string{"id_token"},
+		SubjectTypesSupported:            []string{"public"},
+		IDTokenSigningAlgValuesSupported: []string{"ES384"},
+	}
+	data, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshaling openid-configuration: %w", err)
+	}
+	data = append(data, '\n')
+	path := OpenIDConfigPath(baseDir, issuerName)
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return fmt.Errorf("creating directory: %w", err)
+	}
+	return os.WriteFile(path, data, 0o644)
+}

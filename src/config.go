@@ -12,6 +12,7 @@ var validName = regexp.MustCompile(`^[a-z0-9-]+$`)
 
 type Config struct {
 	Vault   string   `yaml:"vault"`
+	BaseURL string   `yaml:"base_url"`
 	Issuers []Issuer `yaml:"issuers"`
 }
 
@@ -46,6 +47,9 @@ func LoadConfig(path string) (*Config, error) {
 func (c *Config) Validate() error {
 	if c.Vault == "" {
 		return fmt.Errorf("vault is required")
+	}
+	if c.BaseURL == "" {
+		return fmt.Errorf("base_url is required")
 	}
 	if len(c.Issuers) == 0 {
 		return fmt.Errorf("at least one issuer is required")
